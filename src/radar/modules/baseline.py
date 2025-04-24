@@ -1,6 +1,5 @@
 import torch
 from torch import nn
-import timm
 from timm.models.resnet import BasicBlock, downsample_conv
 import einops
 

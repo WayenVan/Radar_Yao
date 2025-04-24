@@ -1,0 +1,3 @@
+_target_: radar.modules.Baseline
+num_classes: 5
+cnn_arch: default

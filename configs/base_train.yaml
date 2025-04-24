@@ -1,0 +1,4 @@
+defaults:
+  - /optim: adam
+  - /model: baseline
+  - /loss: ce

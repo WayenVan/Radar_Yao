@@ -1,4 +1,6 @@
 dataset/
+output/
+outputs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

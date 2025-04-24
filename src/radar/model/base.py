@@ -1,4 +1,4 @@
-from lightning import LightningDataModule
+from lightning import LightningModule
 from omegaconf import DictConfig
 from hydra.utils import instantiate
 import torch
@@ -8,7 +8,7 @@ from collections import OrderedDict, namedtuple
 from torchmetrics import Accuracy
 
 
-class BaseModel(LightningDataModule):
+class BaseModel(LightningModule):
     def __init__(self, cfg: DictConfig, categorys: List[str]) -> None:
         super(BaseModel).__init__()
         self.cfg = cfg
