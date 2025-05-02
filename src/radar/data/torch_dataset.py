@@ -26,10 +26,22 @@ class RadarDataset:
         data = np.load(Path(self.data_root) / file)
 
         # TODO: adjust output data
-        return standardize(data["aoa_spectrum"]), standardize(data["aod_spectrum"])
+        aoa_spectrum, aod_spectrum = (
+            standardize(data["aoa_spectrum"]),
+            standardize(data["aod_spectrum"]),
+        )
+        label = state_dict["gesture"]
+        return dict(
+            aoa_spectrum=aoa_spectrum,
+            aod_spectrum=aod_spectrum,
+            label=label,
+        )
 
     def __len__(self):
         return len(self.index.id_list)
+
+    def get_cats(self):
+        return self.index.cats
 
 
 if __name__ == "__main__":

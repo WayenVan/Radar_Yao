@@ -2,3 +2,12 @@ defaults:
   - /optim: adam
   - /model: baseline
   - /loss: ce
+
+batch_size: 32
+num_workers: 4
+
+optim:
+  lr: 1e-4
+
+dataset:
+  data_root: dataset

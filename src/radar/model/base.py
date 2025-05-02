@@ -10,7 +10,7 @@ from torchmetrics import Accuracy
 
 class BaseModel(LightningModule):
     def __init__(self, cfg: DictConfig, categorys: List[str]) -> None:
-        super(BaseModel).__init__()
+        super().__init__()
         self.cfg = cfg
         self.model = instantiate(cfg.model)
         self.loss = instantiate(cfg.loss)

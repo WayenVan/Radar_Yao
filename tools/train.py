@@ -6,13 +6,15 @@ import sys
 
 sys.path.append("src")
 from radar.model.base import BaseModel
+from radar.model.datamodule import DataModule
 
 
 @hydra.main(version_base=None, config_path="../configs", config_name="default_train")
-def my_app(cfg: DictConfig) -> None:
+def train(cfg: DictConfig) -> None:
     print(OmegaConf.to_yaml(cfg))
     BaseModel(cfg, categorys=["A", "B", "C", "D"])
+    DataModule
 
 
 if __name__ == "__main__":
-    my_app()
+    train()

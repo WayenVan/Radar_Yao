@@ -58,6 +58,10 @@ class RadarIndex:
             self.round_dict[state_dict["round"]].append(id)
             self.profile_dict[state_dict["profile"]].append(id)
 
+    @property
+    def cats(self):
+        return ["g1", "g2", "g3", "g4", "g5"]
+
 
 if __name__ == "__main__":
     RadarIndex("dataset")
