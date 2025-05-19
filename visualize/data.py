@@ -1,18 +1,13 @@
 import sys
-import pytest
-import numpy as np
 
 sys.path.append("src")
+import cv2
 from radar.data.torch_dataset import RadarDataset
 
-dataset = RadarDataset("dataset")
 
-import matplotlib.pyplot as plt
+dataset = RadarDataset("/root/shared-data/Radar_Yao/dataset/radar-data/")
+data = dataset[0]
 
+video = data[1]
 
-print(dataset[0][0].shape)
-print(dataset[0][1].shape)
-
-data = np.concatenate([dataset[0][0][0, :, :], dataset[0][1][0, :, :]], axis=-1)
-plt.imshow(data)
-plt.show()
+print(video.shape)
