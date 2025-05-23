@@ -19,7 +19,7 @@ class RadarDataIndex:
             self.rgbdata_data_root, parse_rgbdata_data
         )
 
-        self.global_table = self.depth_data_table.join(
+        self.global_table = self.rgbdata_data_table.join(
             self.radar_data_table, on=["id", "index"], how="inner", suffix="_radar"
         ).join(self.depth_data_table, on=["id", "index"], how="inner", suffix="_depth")
 
@@ -128,4 +128,3 @@ if __name__ == "__main__":
     _, _, depth_data_files = radar_data_index.get_data_by_id("2025_05_12_15_48")
     print(depth_data_files)
     print(radar_data_index.ids)
-

@@ -5,17 +5,6 @@ from torchvision import transforms
 from torch import nn
 from torchvision.transforms import functional as F
 
-import urllib
-
-url, filename = (
-    "https://github.com/pytorch/hub/raw/master/images/deeplab1.png",
-    "outputs/deeplab1.png",
-)
-try:
-    urllib.URLopener().retrieve(url, filename)
-except:
-    urllib.request.urlretrieve(url, filename)
-
 
 class DeepLabSegWrapper(nn.Module):
     def __init__(self, human_index=17, segmentation_input_size=(256, 256)):
@@ -29,7 +18,7 @@ class DeepLabSegWrapper(nn.Module):
             ]
         )
         self.model = torch.hub.load(
-            "pytorch/vision:v0.10.0", "deeplabv3_resnet50", pretrained=True
+            "pytorch/vision:v0.10.0", "deeplabv3_resnet101", pretrained=True
         )
         self.model.eval()
 
@@ -52,20 +41,18 @@ class DeepLabSegWrapper(nn.Module):
         return F.resize(output_predictions, (H, W), antialias=True)
 
 
-input_image = Image.open("outputs/deeplab1.png")
+input_image = Image.open("outputs/video_0.png")
 input_image = input_image.convert("RGB")
 
 input_tensor = F.to_tensor(input_image)
 input_batch = input_tensor.unsqueeze(0)  # create a mini-batch as expected by the model
 input_batch = torch.broadcast_to(input_batch, (10, -1, -1, -1))
 
-model = DeepLabSegWrapper()
+model = DeepLabSegWrapper(human_index=12)
 model.eval()
 
 output_predictions = model(input_batch)
 
-
-import matplotlib.pyplot as plt
-
-plt.imshow(output_predictions[0].cpu().numpy())
-plt.show()
+out = Image.fromarray(output_predictions[0].cpu().numpy())  # 0 is human?
+out = out.convert("L")
+out.save("outputs/deeplab.jpg")
