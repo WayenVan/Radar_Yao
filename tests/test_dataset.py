@@ -1,6 +1,6 @@
 import sys
-import pytest
 from omegaconf import DictConfig, OmegaConf
+from diffusers import UNet2DConditionModel
 
 
 sys.path.append("src")
