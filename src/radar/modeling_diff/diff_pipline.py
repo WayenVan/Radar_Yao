@@ -22,7 +22,6 @@ from diffusers.utils import is_torch_xla_available
 from diffusers.utils.torch_utils import randn_tensor
 
 from diffusers.schedulers import DDPMScheduler
-from .unets import U_Net
 
 
 if is_torch_xla_available():
@@ -50,7 +49,7 @@ class RDDPMPipeline(DiffusionPipeline):
 
     model_cpu_offload_seq = "unet"
 
-    def __init__(self, unet: U_Net, scheduler: DDPMScheduler):
+    def __init__(self, unet, scheduler: DDPMScheduler):
         super().__init__()
         self.register_modules(unet=unet, scheduler=scheduler)
 
@@ -58,6 +57,7 @@ class RDDPMPipeline(DiffusionPipeline):
     def __call__(
         self,
         batch_size: int = 1,
+        r_conditional_input: Optional[torch.Tensor] = None,
         generator: Optional[Union[torch.Generator, List[torch.Generator]]] = None,
         num_inference_steps: int = 1000,
         output_type: Optional[Literal["pil", "numpy", "tensor"]] = "tensor",
@@ -104,15 +104,14 @@ class RDDPMPipeline(DiffusionPipeline):
         if isinstance(self.unet.config.sample_size, int):
             image_shape = (
                 batch_size,
-                self.unet.config.in_ch,
+                self.unet.config.in_channels,
                 self.unet.config.sample_size,
                 self.unet.config.sample_size,
             )
         else:
             image_shape = (
                 batch_size,
-                self.unet.config.in_ch,
-                *self.unet.config.sample_size,
+                self.unet.config.in_channels * self.unet.config.sample_size,
             )
 
         if self.device.type == "mps":
@@ -134,7 +133,9 @@ class RDDPMPipeline(DiffusionPipeline):
 
         for t in self.progress_bar(self.scheduler.timesteps):
             # 1. predict noise model_output
-            model_output = self.unet(image, t).sample
+            model_output = self.unet(
+                image, t, r_conditional_input=r_conditional_input
+            ).sample
 
             # 2. compute previous image: x_t -> x_t-1
             image = self.scheduler.step(

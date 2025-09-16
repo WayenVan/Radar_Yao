@@ -20,7 +20,14 @@ import PIL
 import PIL.Image
 import requests
 
+from diffusers import DiffusionPipeline
 
+# pipeline = DiffusionPipeline.from_pretrained(
+#     "stable-diffusion-v1-5/stable-diffusion-v1-5", use_safetensors=True
+# )
+
+
+# pipeline.save_pretrained("outputs/sd-v1-5")
 class YourCustomPipelineOutput(BaseOutput):
     images: Union[List[PIL.Image.Image], torch.Tensor]
 
@@ -43,6 +50,7 @@ unet = U_Net(3, 1, (224, 224))
 print(unet.dtype)
 
 pipe = YourCustomPipeline(my_unet=unet)
+pipe.save_pretrained("outputs/your-custom-unet-cfg")
 
 with open("outputs/your-custom-unet-cfg/config.json", "r") as f:
     cfg = json.load(f)

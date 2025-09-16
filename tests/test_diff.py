@@ -4,22 +4,34 @@ sys.path.append("src")
 
 
 from radar.modeling_diff.diff_pipline import RDDPMPipeline
-from radar.modeling_diff.unets import U_Net
+from radar.modeling_diff.unet_conditional import UNet2DConditionModel
 from diffusers.schedulers.scheduling_ddpm import DDPMScheduler
-from diffusers.models.unets import UNet2DModel
+# from diffusers.models.unets import UNet2DModel, UNet2DConditionModel
+
+import torch
 
 
 def test_diff():
-    unet = U_Net(in_ch=1, out_ch=1, sample_size=(64, 64)).cuda()
+    unet = UNet2DConditionModel(
+        sample_size=64,
+        in_channels=1,
+        out_channels=1,
+        cross_attention_dim=256,
+        block_out_channels=(64, 128, 256, 512),
+        r_conditional_encoder_type="simple_conditional_encoder",
+        r_conditional_encoder_kwargs=dict(
+            in_channels=1, out_channels=32, block_out_channels=[64, 128, 256]
+        ),
+    ).cuda()
     scheduler = DDPMScheduler(num_train_timesteps=10000)
-
     pipline = RDDPMPipeline(unet=unet, scheduler=scheduler)
 
-    out = pipline(num_inference_steps=1000, output_type="pil").images
+    cond = torch.randn(1, 1, 64, 64).cuda()
+    out = pipline(
+        num_inference_steps=1000, output_type="pil", r_conditional_input=cond
+    ).images
 
-    import matplotlib.pyplot as plt
-
-    plt.imshow(out[0])
+    pipline.save_pretrained("outputs/rddpm-pipeline-test")
 
 
 if __name__ == "__main__":
