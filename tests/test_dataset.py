@@ -1,18 +1,22 @@
 import sys
 from omegaconf import DictConfig, OmegaConf
 from diffusers import UNet2DConditionModel
-
+from datasets import load_dataset, load_from_disk
 
 sys.path.append("src")
-from radar.data.torch_dataset import RadarDataset
-from radar.data.datamodule import RadarDataModule
+from radar.data.datasets.radar import RadarDataset
 
 
-def test_radar_dataset_shape():
-    dataset = RadarDataset("/root/shared-data/Radar_Yao/dataset/radar-data/")
-    for i in range(5):
-        data = dataset[i]
-        print(data)
+def test_radar_dataset():
+    dataset = RadarDataset("dataset/rnb-radar", seleted_range_bin=[76, 77])
+    print(len(dataset))
+    for i in range(len(dataset)):
+        sample = dataset[i]
+        print(
+            sample["depth_data"].shape,
+            sample["rgb_data"].shape,
+            sample["radar_data"].shape,
+        )
 
 
 def test_radar_datamodule():
@@ -38,4 +42,5 @@ def test_radar_dataset_len():
 
 if __name__ == "__main__":
     # test_radar_datamodule()
-    test_radar_dataset_shape()
+    # test_radar_dataset_shape()
+    test_radar_dataset()

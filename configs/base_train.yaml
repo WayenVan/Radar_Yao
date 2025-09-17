@@ -1,13 +1,6 @@
 defaults:
-  - /optim: adam
-  - /model: baseline
-  - /loss: ce
-
-batch_size: 32
-num_workers: 4
-
-optim:
-  lr: 1e-4
-
-dataset:
-  data_root: dataset
+  - engine: base_engine
+  - model: base_model
+  - data: radar
+  - override hydra/job_logging: none
+  - override hydra/hydra_logging: none

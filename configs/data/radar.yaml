@@ -1,0 +1,13 @@
+data_root: dataset/rnb-radar
+
+dataset:
+  _target_: radar.data.datasets.radar.RadarDataset
+  data_root: ${data.data_root}
+
+transform:
+  _target_: radar.data.transforms.radar_trans.RadarTrans
+  depth_size: [48, 64]
+  radar_size: [48, 64]
+
+collator:
+  _target_: radar.data.collators.radar_collator.RadarCollator

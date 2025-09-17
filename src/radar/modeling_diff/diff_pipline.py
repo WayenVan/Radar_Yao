@@ -16,12 +16,14 @@
 from typing import List, Optional, Tuple, Union, Literal
 
 import torch
+from torch import nn
 
 from diffusers.pipelines.pipeline_utils import DiffusionPipeline, ImagePipelineOutput
 from diffusers.utils import is_torch_xla_available
 from diffusers.utils.torch_utils import randn_tensor
 
 from diffusers.schedulers import DDPMScheduler
+from torch.nn import functional as F
 
 
 if is_torch_xla_available():
@@ -33,7 +35,7 @@ else:
 
 
 class RDDPMPipeline(DiffusionPipeline):
-    r"""
+    """
     Pipeline for image generation.
 
     This model inherits from [`DiffusionPipeline`]. Check the superclass documentation for the generic methods
