@@ -4,3 +4,6 @@ defaults:
   - data: radar
   - override hydra/job_logging: none
   - override hydra/hydra_logging: none
+
+hydra:
+  output_subdir: null
