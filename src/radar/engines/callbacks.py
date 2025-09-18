@@ -47,8 +47,12 @@ class SaveBestMetricCallback(TrainerCallback):
         self.last_checkpoint_path = None
 
     def on_evaluate(self, args, state, control, metrics=None, **kwargs):
-        trainer = kwargs.get("trainer")  # 通过 kwargs 获取 trainer
-        if trainer and trainer.accelerator.is_local_main_process:
+        trainer = kwargs.get("trainer", None)  # 通过 kwargs 获取 trainer
+        if (
+            trainer
+            and state.global_step > 0
+            and trainer.accelerator.is_local_main_process
+        ):
             save_dir = os.path.join(args.output_dir, "best_checkpoint")
 
             if not os.path.exists(save_dir):

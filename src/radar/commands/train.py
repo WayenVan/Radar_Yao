@@ -27,8 +27,8 @@ def main(cfg: DictConfig):
         cfg.data.dataset,
         transform=train_transform,
     )
-    # subset with random 100 samples for eval
-    eval_set = Subset(train_set, torch.randperm(len(train_set))[:100])
+    # subset with random 100 samples for eval, using
+    eval_set = Subset(train_set, torch.randperm(len(train_set))[:32].tolist())
 
     # Create models
     unet = instantiate(cfg.model.unet).cpu()
@@ -50,6 +50,7 @@ def main(cfg: DictConfig):
         callbacks=callbacks,
     )
 
+    trainer.evaluate()
     trainer.train()
 
 
