@@ -173,7 +173,7 @@ class RDDPMPipeline(DiffusionPipeline):
                 xm.mark_step()
 
         # WARN: currently, we don't need do these clamp
-        image = (image / 2 + 0.5).clamp(0, 1)
+        # image = (image / 2 + 0.5).clamp(0, 1)
 
         if output_type == "numpy":
             image = image.cpu().permute(0, 2, 3, 1).numpy()

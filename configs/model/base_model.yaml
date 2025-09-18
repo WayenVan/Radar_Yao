@@ -13,7 +13,7 @@ unet:
 
 scheduler:
   _target_: diffusers.schedulers.scheduling_ddpm.DDPMScheduler
-  num_train_timesteps: 1000
+  num_train_timesteps: 500
 
 pipline:
   _target_: radar.modeling_diff.diff_pipline.RDDPMPipeline

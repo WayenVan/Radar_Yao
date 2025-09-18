@@ -1,16 +1,15 @@
 training_args:
+  num_train_epochs: 80
   per_device_train_batch_size: 8
-  per_device_eval_batch_size: 1
+  per_device_eval_batch_size: 8
   report_to: none
   remove_unused_columns: False
   ddp_find_unused_parameters: False
-  output_dir: outputs/test_output
+  output_dir: outputs/first_demo
   save_strategy: steps
-  save_steps: 500
-  save_total_limit: 3
-  logging_steps: 10
+  save_steps: 1000
+  save_total_limit: 1
+  logging_steps: 50
   eval_strategy: "steps"
-  eval_steps: 100
-  metric_for_best_model: mse
-  greater_is_better: False
+  eval_steps: 500
   learning_rate: 1e-4

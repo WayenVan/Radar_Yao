@@ -13,6 +13,7 @@ import numpy as np
 from sklearn.metrics import mean_squared_error
 
 from transformers.modeling_utils import unwrap_model
+from .callbacks import DiffusionTrainerCallbackHandler
 
 
 class DiffusionTrainer(Trainer):
@@ -29,6 +30,17 @@ class DiffusionTrainer(Trainer):
         self.scheduler: SchedulerMixin = scheduler
         self.compute_metrics = self._compute_metrics
         self.unet_config = unwrap_model(self.model).config
+
+        self.callback_handler = DiffusionTrainerCallbackHandler(
+            self,
+            self.callback_handler.callbacks,  # WARN: replaceing the original callback handler
+            self.model,
+            self.processing_class,
+            self.optimizer,
+            self.lr_scheduler,
+        )
+
+        # redefine callback handler to pass trainer instance
 
     @staticmethod
     def _compute_metrics(pred: EvalLoopOutput) -> Dict[str, float]:
@@ -103,7 +115,7 @@ class DiffusionTrainer(Trainer):
                 r_conditional_input=r_conditional_input,
                 num_inference_steps=self.scheduler.config.num_train_timesteps,
                 output_type="tensor",
-                # slience=True,
+                slience=True,
             )
 
         return None, pred.images, labels
@@ -117,7 +129,7 @@ class DiffusionTrainer(Trainer):
 
         # 创建包装后的模型
         pipline = RDDPMPipeline(
-            unet=self.model,
+            unet=unwrap_model(self.model),  # NOTE: in case when we have
             scheduler=self.scheduler,
         )
 
