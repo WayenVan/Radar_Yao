@@ -18,13 +18,17 @@ from typing import List, Optional, Tuple, Union, Literal
 import torch
 from torch import nn
 
-from diffusers.pipelines.pipeline_utils import DiffusionPipeline, ImagePipelineOutput
+from diffusers.pipelines.pipeline_utils import DiffusionPipeline
+from diffusers.utils import BaseOutput
 from diffusers.utils import is_torch_xla_available
 from diffusers.utils.torch_utils import randn_tensor
 
 from diffusers.schedulers import DDPMScheduler
 from torch.nn import functional as F
 
+from dataclasses import dataclass
+import PIL
+import numpy as np
 
 if is_torch_xla_available():
     import torch_xla.core.xla_model as xm
@@ -32,6 +36,20 @@ if is_torch_xla_available():
     XLA_AVAILABLE = True
 else:
     XLA_AVAILABLE = False
+
+
+@dataclass
+class ImagePipelineOutput(BaseOutput):
+    """
+    Output class for image pipelines.
+
+    Args:
+        images (`List[PIL.Image.Image]` or `np.ndarray`)
+            List of denoised PIL images of length `batch_size` or NumPy array of shape `(batch_size, height, width,
+            num_channels)`.
+    """
+
+    images: Union[List[PIL.Image.Image], np.ndarray, torch.Tensor]
 
 
 class RDDPMPipeline(DiffusionPipeline):
@@ -64,6 +82,7 @@ class RDDPMPipeline(DiffusionPipeline):
         num_inference_steps: int = 1000,
         output_type: Optional[Literal["pil", "numpy", "tensor"]] = "tensor",
         return_dict: bool = True,
+        slience: bool = False,
     ) -> Union[ImagePipelineOutput, Tuple]:
         r"""
         The call function to the pipeline for generation.
@@ -113,7 +132,8 @@ class RDDPMPipeline(DiffusionPipeline):
         else:
             image_shape = (
                 batch_size,
-                self.unet.config.in_channels * self.unet.config.sample_size,
+                self.unet.config.in_channels,
+                *self.unet.config.sample_size,
             )
 
         if self.device.type == "mps":
@@ -133,7 +153,12 @@ class RDDPMPipeline(DiffusionPipeline):
         # set step values
         self.scheduler.set_timesteps(num_inference_steps)
 
-        for t in self.progress_bar(self.scheduler.timesteps):
+        if not slience:
+            iter = self.progress_bar(self.scheduler.timesteps)
+        else:
+            iter = self.scheduler.timesteps
+
+        for t in iter:
             # 1. predict noise model_output
             model_output = self.unet(
                 image, t, r_conditional_input=r_conditional_input
@@ -147,7 +172,9 @@ class RDDPMPipeline(DiffusionPipeline):
             if XLA_AVAILABLE:
                 xm.mark_step()
 
+        # WARN: currently, we don't need do these clamp
         image = (image / 2 + 0.5).clamp(0, 1)
+
         if output_type == "numpy":
             image = image.cpu().permute(0, 2, 3, 1).numpy()
         elif output_type == "pil":

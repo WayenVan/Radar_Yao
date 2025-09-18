@@ -7,7 +7,7 @@ import os
 from accelerate import Accelerator
 from ..engines.trainer import DiffusionTrainer
 from transformers.trainer import TrainingArguments
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader, Subset
 
 DEFAULT_CONFIG_PATH = os.path.abspath(os.path.join(os.getcwd(), "configs"))
 
@@ -22,6 +22,7 @@ def main(cfg: DictConfig):
         cfg.data.dataset,
         transform=train_transform,
     )
+    eval_set = Subset(train_set, list(range(2)))
 
     # Create models
     unet = instantiate(cfg.model.unet).cpu()
@@ -34,6 +35,7 @@ def main(cfg: DictConfig):
         scheduler=scheduler,
         args=training_args,
         train_dataset=train_set,
+        eval_dataset=eval_set,
         data_collator=instantiate(cfg.data.collator),
     )
     trainer.train()

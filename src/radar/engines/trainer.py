@@ -6,12 +6,39 @@ from typing import Optional
 import os
 import torch
 from torch.nn import functional as F
+from torch import nn
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from transformers.trainer_utils import EvalLoopOutput
+import numpy as np
+from sklearn.metrics import mean_squared_error
+
+from transformers.modeling_utils import unwrap_model
 
 
 class DiffusionTrainer(Trainer):
     def __init__(self, scheduler: SchedulerMixin, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        if self.args.remove_unused_columns is True:
+            raise ValueError(
+                "DiffusionTrainer does not support `remove_unused_columns` yet. Please set `remove_unused_columns=False` when instantiating the Trainer."
+            )
+        if kwargs.get("compute_metrics", None) is not None:
+            raise ValueError(
+                "DiffusionTrainer does not support `compute_metrics`. The trainner already has its own metrics computation."
+            )
         self.scheduler: SchedulerMixin = scheduler
+        self.compute_metrics = self._compute_metrics
+        self.unet_config = unwrap_model(self.model).config
+
+    @staticmethod
+    def _compute_metrics(pred: EvalLoopOutput) -> Dict[str, float]:
+        preds = pred.predictions
+        labels = pred.label_ids
+        mse = mean_squared_error(
+            labels.reshape(labels.shape[0], -1),
+            preds.reshape(preds.shape[0], -1),
+        )
+        return {"mse": mse}
 
     @staticmethod
     def loss_fn(model, scheduler, label, r_conditional_input):
@@ -32,15 +59,54 @@ class DiffusionTrainer(Trainer):
     def compute_loss(
         self, model, inputs, return_outputs=False, num_items_in_batch=None
     ):
-        r_conditional_input = inputs.pop("r_conditional_input").to(
-            self.accelerator.device
+        inputs = self._prepare_inputs(inputs)
+
+        r_conditional_input = inputs.pop("r_conditional_input")
+        label = inputs.pop("label")
+
+        assert label.shape[2:] == tuple(self.unet_config.sample_size), (
+            f"Unexpected image shape {label.shape[2:]}, "
+            f"expected {self.unet_config.sample_size} following the config."
         )
-        label = inputs.pop("label").to(self.accelerator.device)
 
         loss = self.loss_fn(model, self.scheduler, label, r_conditional_input)
-        self.log(dict(steps=self.state.global_step))
+
+        # if (
+        #     self.args.logging_steps > 0
+        #     and self.state.global_step % self.args.logging_steps == 0
+        # ):
+        #     self.log(dict(steps=self.state.global_step))
 
         return (loss, None) if return_outputs else loss
+
+    def prediction_step(
+        self,
+        model: nn.Module,
+        inputs: Dict[str, Union[torch.Tensor, Any]],
+        prediction_loss_only: bool,
+        ignore_keys: Optional[List[str]] = None,
+    ) -> Tuple[Optional[torch.Tensor], Optional[torch.Tensor], Optional[torch.Tensor]]:
+        # 自定义预测步骤
+        model.eval()
+        with torch.no_grad():
+            # 创建包装后的模型
+            inputs = self._prepare_inputs(inputs)
+            r_conditional_input = inputs.pop("r_conditional_input")
+            labels = inputs.pop("label")
+
+            pipline = RDDPMPipeline(
+                unet=self.model,
+                scheduler=self.scheduler,
+            )
+            pred = pipline(
+                batch_size=r_conditional_input.shape[0],
+                r_conditional_input=r_conditional_input,
+                num_inference_steps=self.scheduler.config.num_train_timesteps,
+                output_type="tensor",
+                # slience=True,
+            )
+
+        return None, pred.images, labels
 
     def _save(self, output_dir: Optional[str] = None, state_dict=None):
         output_dir = output_dir if output_dir is not None else self.args.output_dir
