@@ -28,7 +28,7 @@ def main(cfg: DictConfig):
         transform=train_transform,
     )
     # subset with random 100 samples for eval, using
-    eval_set = Subset(train_set, torch.randperm(len(train_set))[:32].tolist())
+    eval_set = Subset(train_set, torch.randperm(len(train_set))[:16].tolist())
 
     # Create models
     unet = instantiate(cfg.model.unet).cpu()

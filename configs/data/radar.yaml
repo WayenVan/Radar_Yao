@@ -1,4 +1,4 @@
-data_root: dataset/rnb-radar
+data_root: /root/projects/Radar_Yao/dataset/rnb-radar
 
 dataset:
   _target_: radar.data.datasets.radar.RadarDataset
