@@ -3,7 +3,6 @@ import marimo
 __generated_with = "0.15.2"
 app = marimo.App(width="medium")
 
-
 with app.setup:
     import sys
 
@@ -18,6 +17,12 @@ with app.setup:
     from torch.utils.data import DataLoader
 
     DEFAULT_CONFIG_PATH = "../../root/projects/Radar_Yao/configs"
+
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Load Pretrained Model and Dataset""")
+    return
 
 
 @app.cell
@@ -37,12 +42,17 @@ def _():
     loader = DataLoader(
         train_set, batch_size=2, shuffle=True, num_workers=2, collate_fn=collate_fn
     )
+    return loader, model, train_set
 
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Generate Samples""")
     return
 
 
 @app.cell
-def _(model, train_set, loader):
+def _(loader, model, train_set):
     idx = np.random.randint(0, len(train_set))
 
     sample = next(iter(loader))
@@ -60,12 +70,17 @@ def _(model, train_set, loader):
             return_dict=False,
             num_inference_steps=500,
         )[0]
+    return label, pred, r_conditional_input
 
+
+@app.cell
+def _(mo):
+    mo.md(r"""## Visualize Results""")
     return
 
 
 @app.cell
-def _(label, r_conditional_input, pred):
+def _(label, pred, r_conditional_input):
     print(label.shape)
     print(pred.shape)
     fig, axs = plt.subplots(1, 3, figsize=(12, 4))
@@ -76,6 +91,7 @@ def _(label, r_conditional_input, pred):
     axs[2].imshow(pred.reshape(-1, 48, 64)[0], cmap="gray")
     axs[2].set_title("Predicted")
     axs[2].set_title("Predicted")
+    return
 
 
 if __name__ == "__main__":
