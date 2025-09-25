@@ -83,6 +83,7 @@ class RDDPMPipeline(DiffusionPipeline):
         output_type: Optional[Literal["pil", "numpy", "tensor"]] = "tensor",
         return_dict: bool = True,
         slience: bool = False,
+        remap: bool = False,
     ) -> Union[ImagePipelineOutput, Tuple]:
         r"""
         The call function to the pipeline for generation.
@@ -100,6 +101,11 @@ class RDDPMPipeline(DiffusionPipeline):
                 The output format of the generated image. Choose between `PIL.Image` or `np.array`.
             return_dict (`bool`, *optional*, defaults to `True`):
                 Whether or not to return a [`~pipelines.ImagePipelineOutput`] instead of a plain tuple.
+            slience (`bool`, *optional*, defaults to `False`):
+                Whether or not to print the progress bar.
+            remap (`bool`, *optional*, defaults to `False`):
+                Whether or not to remap the output to [0, 1], force clamp
+
 
         Example:
 
@@ -172,14 +178,17 @@ class RDDPMPipeline(DiffusionPipeline):
             if XLA_AVAILABLE:
                 xm.mark_step()
 
-        # WARN: currently, we don't need do these clamp
-        # image = (image / 2 + 0.5).clamp(0, 1)
+        image = image.cpu()
+
+        if remap:
+            image = (image / 2 + 0.5).clamp(0, 1)
 
         if output_type == "numpy":
             image = image.cpu().permute(0, 2, 3, 1).numpy()
         elif output_type == "pil":
-            image = image.cpu().permute(0, 2, 3, 1).numpy()
-            image = self.numpy_to_pil(image)
+            raise NotImplementedError
+            # image = image.cpu().permute(0, 2, 3, 1).numpy()
+            # image = self.numpy_to_pil(image)
 
         if not return_dict:
             return (image,)
